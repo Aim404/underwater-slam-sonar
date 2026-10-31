@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Underwater SLAM and imaging sonar — simulation study</title>
+<style>
+  :root{
+    --ink:#15181c; --mid:#5b6673; --line:#e2e6ea; --bg:#ffffff; --soft:#f6f8fa;
+    --accent:#8c2f28;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 Georgia,"Times New Roman",serif;}
+  .wrap{max-width:860px;margin:0 auto;padding:56px 24px 72px}
+  h1{font-size:30px;line-height:1.25;margin:0 0 10px;letter-spacing:-.01em}
+  .sub{color:var(--mid);font-style:italic;margin:0 0 26px}
+  .lede{font-size:17px;margin:0 0 30px}
+  .note{color:var(--mid);font-size:14px;border-left:3px solid var(--line);
+    padding:2px 0 2px 14px;margin:0 0 34px}
+  h2{font-size:19px;margin:38px 0 14px;letter-spacing:-.01em}
+  h2 span{color:var(--mid);font-weight:normal;font-size:14px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:18px 0 8px}
+  .card{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+  .card .n{font-size:24px;font-weight:bold;letter-spacing:-.02em;font-family:system-ui,sans-serif}
+  .card .k{font-size:13px;color:var(--mid);font-family:system-ui,sans-serif;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0 8px;
+    font-family:system-ui,-apple-system,sans-serif}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--mid);font-weight:600;font-size:13px}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 6px}
+  a.btn{display:inline-block;padding:11px 20px;border-radius:7px;text-decoration:none;
+    font-family:system-ui,sans-serif;font-size:14px;font-weight:600;border:1px solid var(--accent)}
+  a.primary{background:var(--accent);color:#fff}
+  a.ghost{color:var(--accent);background:#fff}
+  a.btn:hover{opacity:.86}
+  .shots{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+  .shots figure{margin:0}
+  .shots img{width:100%;display:block;border:1px solid var(--line);border-radius:6px}
+  .shots figcaption{font-size:12.5px;color:var(--mid);margin-top:6px;
+    font-family:system-ui,sans-serif}
+  ul.lim{padding-left:20px;margin:12px 0;font-size:15px}
+  ul.lim li{margin-bottom:7px}
+  footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--mid);font-size:14px}
+  a{color:var(--accent)}
+  @media(max-width:620px){.shots{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Underwater SLAM and imaging sonar</h1>
+  <p class="sub">A simulation study — where each modality stops working</p>
+
+  <p class="lede">What a robot can still know about where it is, when the water takes away most of what
+  vision gives. A pool-scale scene in Isaac Sim with a turbidity parameter I can sweep, a visual SLAM
+  chain, and a forward-looking imaging sonar implemented from its physics.</p>
+
+  <p class="note">All results are from simulation. The sonar is synthesised from its acoustic model,
+  not measured by a real device. This changes what the numbers mean, so it is stated first.</p>
+
+  <div class="cta">
+    <a class="btn primary" href="demo/slam_3d.html">Open the 3D trajectory viewer →</a>
+    <a class="btn ghost" href="https://github.com/Aim404/underwater-slam-sonar">Source on GitHub</a>
+  </div>
+
+  <h2>Visual SLAM <span>— two sequences, same pipeline</span></h2>
+
+  <div class="cards">
+    <div class="card"><div class="n">97.1%</div><div class="k">localisable frames, clear water</div></div>
+    <div class="card"><div class="n">93.3%</div><div class="k">localisable frames, turbid water</div></div>
+    <div class="card"><div class="n">3.7 / 4.1 cm</div><div class="k">median error, clear / turbid</div></div>
+  </div>
+
+  <table>
+    <tr><th>Sequence</th><th>Water</th><th>Localisable</th><th>Median err.</th><th>RMSE</th></tr>
+    <tr><td>2026-10-18 (136 s)</td><td>clear, ~31 m</td><td class="num">441/454 (97.1%)</td><td class="num">3.71 cm</td><td class="num">4.39</td></tr>
+    <tr><td>2026-10-19 (112 s)</td><td>turbid, ~8 m</td><td class="num">349/374 (93.3%)</td><td class="num">4.13 cm</td><td class="num">5.58</td></tr>
+  </table>
+
+  <p style="font-size:14px;color:var(--mid);font-family:system-ui,sans-serif;margin:6px 0 0">
+  Errors measured in the AprilTag world frame, <strong>without ground-truth alignment and without
+  scale fitting</strong>. An independent recomputation gives 0.0448 / 0.0422 m all-frame median.</p>
+
+  <h2>Imaging sonar <span>— implemented from the acoustic model</span></h2>
+
+  <div class="cards">
+    <div class="card"><div class="n">0.248 m</div><div class="k">range error (median)</div></div>
+    <div class="card"><div class="n">0.295 m</div><div class="k">position error</div></div>
+    <div class="card"><div class="n">0.30 m @ 12 m</div><div class="k">vs vision 0.09 m @ 8 m</div></div>
+  </div>
+
+  <p style="font-size:14px;color:var(--mid);font-family:system-ui,sans-serif">
+  Ray casting, target strength, transmission loss, Rayleigh (Swerling 1) speckle, acoustic shadow, and a
+  configurable vertical beam wedge — no wrapper around an existing sonar simulator. The two modalities
+  fail in different regimes; that boundary, not a fusion result, is what this study measures.</p>
+
+  <div class="shots">
+    <figure>
+      <img src="figures/sonar_four_panel.png" alt="Sonar four-panel view">
+      <figcaption>Sonar, four views: polar sector, profile, accumulated elevation map, local fan.</figcaption>
+    </figure>
+    <figure>
+      <img src="figures/slam_eval_1019.png" alt="SLAM evaluation, turbid sequence">
+      <figcaption>SLAM evaluation on the turbid sequence — trajectory against ground truth.</figcaption>
+    </figure>
+  </div>
+
+  <h2>Honest scope</h2>
+  <ul class="lim">
+    <li><strong>Everything is simulated</strong> — no real vehicle, no real sonar.</li>
+    <li><strong>The two chains are not coupled.</strong> They share sequences, not an optimiser; online
+      tight coupling is the next step and is not done here.</li>
+    <li><strong>The visual chain is offline</strong>, with two-way initialisation — no online keyframe
+      management, no loop closure, no marker-free mapping.</li>
+    <li><strong>Sonar mapping coverage is 5.7%</strong>, and that is geometry, not a defect.</li>
+  </ul>
+
+  <footer>
+    Yuncong Yang · Underwater Engineering Institute, Shanghai Jiao Tong University ·
+    <a href="mailto:aim404@sjtu.edu.cn">aim404@sjtu.edu.cn</a> ·
+    <a href="https://aim404.github.io">aim404.github.io</a>
+  </footer>
+
+</div>
+</body>
+</html>
