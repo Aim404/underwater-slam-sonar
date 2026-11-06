@@ -49,6 +49,35 @@ frustums, scrubbable in time.
 
 ---
 
+## Marker-free visual odometry and the sonar as a metric anchor (November 2026)
+
+A later run (180 s, 20 Hz, same Isaac Sim pool) removes the AprilTag seeding from the visual front end
+and uses the sonar as a metric anchor instead. All figures below are taken from the run report and the
+calibration-free study; the simulator's calibration values are used only as ground truth for scoring.
+
+| Result | Value |
+|---|---|
+| Marker-free VO (essential matrix, no tags) | **0.91 m median**, on par with the tag-based 0.91 m |
+| Sonar height, fitted pool-floor plane residual | **0.000 m** |
+| Sonar height error | **6 mm** (0.23 %) |
+| Recovered metric scale | **s = 1.0000 ± 0.0023** |
+| Sonar-flagged visual outliers | 22 frames (1.3 %); after removal the run holds 1.05 m median / 2.6 m max |
+| Sonar-vision consistency | rotation **0.65 deg** median; sonar range **242 mm** vs camera **926 mm** |
+
+The two modalities have complementary degeneracies: the camera resolves attitude (0.65 deg) but not
+depth (926 mm on a small planar board); the sonar resolves range (242 mm) but not fine bearing. That
+division of labour does not need a hand-tuned extrinsic calibration.
+
+[`demo/slam_sonar_results.html`](demo/slam_sonar_results.html) -- the run report with time-axis
+playback and the method comparison (figure captions are in Chinese).
+
+**Still not done:** a joint optimiser. The sonar height cannot be applied as a hard z constraint --
+that was tried and failed -- so it has to enter bundle adjustment as a soft prior residual. This is a
+next step, not a result reported here.
+
+---
+
+
 ## What is in here
 
 ```
@@ -98,11 +127,13 @@ These are the limitations, stated plainly:
 
 1. **Everything is simulated.** No real vehicle, no real sonar. The numbers speak to the algorithm,
    not to a field deployment.
-2. **The two chains are not coupled.** They share recorded sequences and not an optimiser. What is
-   measured is where each modality stops working — not a fused estimator. Online tight coupling is the
-   obvious next step and it is not done here.
-3. **The visual chain is offline**, with two-way initialisation. There is no online keyframe
-   management, no non-adjacent loop closure, and no marker-free mapping.
+2. **The two chains are only partly coupled.** The sonar now supplies a metric scale anchor and flags
+   visual outliers (see the November 2026 section above), but its height is **not yet** a soft prior
+   residual inside bundle adjustment. A hard z-substitution was tried and failed; online tight
+   coupling remains the next step.
+3. **The visual chain is offline**, with two-way initialisation. **A marker-free front end was
+   later demonstrated** (see above); it still has no online keyframe management and no
+   non-adjacent loop closure.
 4. **The two sequences are not a controlled experiment.** Turbidity differs, but so does the
    trajectory; the comparison is suggestive rather than causal.
 5. **Sonar mapping coverage is 5.7 %**, and that is geometry, not a defect: the vehicle cruises at
